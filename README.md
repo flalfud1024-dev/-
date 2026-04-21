@@ -30,14 +30,17 @@
 │   ├── 01_research_design.md      # 연구 설계 및 이론 프레임
 │   ├── 02_thesis_outline.md       # 논문 목차 (한외대 내규 반영)
 │   ├── 03_methodology_notes.md    # 방법론 상세 노트
-│   └── 04_ai_disclosure.md        # AI 활용 공시 및 각주 샘플
+│   ├── 04_ai_disclosure.md        # AI 활용 공시 및 각주 샘플
+│   └── 05_sentiment_methodology.md # 감성분석 방법론 정당화
 └── code/
     ├── requirements.txt           # 패키지 버전 고정
     ├── 00_setup.py                # 환경 설정
     ├── 01_preprocessing.py        # 전처리
     ├── 02_tfidf.py                # TF-IDF 분석
     ├── 03_lda.py                  # LDA 토픽모델링
-    ├── 04_sentiment.py            # 감성분석
+    ├── 04_sentiment.py            # 감성분석 (극성+강도+감정범주 3-layer)
+    ├── 04b_sentiment_validation.py # 수동 코딩 검증 프레임워크
+    ├── 04c_sentiment_stats.py     # 감성 통계검정 (결정트리+효과크기)
     ├── 05_network.py              # 인물 공출현 네트워크
     └── 06_statistics.py           # 통계 검증
 ```
