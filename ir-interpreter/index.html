@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>IR 통역 보조 (노무라 한↔중)</title>
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#121826; --panel2:#1a2233; --line:#222b3d;
+    --text:#e8edf6; --mute:#8a96ad; --accent:#4f8cff; --accent2:#2dd4bf;
+    --warn:#f59e0b; --err:#ef4444; --hl:#fde68a; --hlbg:rgba(253,230,138,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Pretendard","Noto Sans CJK KR","Noto Sans CJK SC",sans-serif;
+    -webkit-text-size-adjust:100%;}
+  body{min-height:100vh;display:flex;flex-direction:column;}
+  header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px}
+  header .sub{font-size:11px;color:var(--mute);margin-top:2px}
+  .status{font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+  .status.ok{color:var(--accent2);border-color:var(--accent2)}
+  .status.err{color:var(--err);border-color:var(--err)}
+  .status.busy{color:var(--warn);border-color:var(--warn)}
+
+  .controls{padding:12px 16px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;background:transparent;color:var(--mute);border:0;padding:8px 10px;font-size:13px;cursor:pointer}
+  .seg button.active{background:var(--accent);color:white}
+  label.lab{font-size:11px;color:var(--mute);margin-right:6px}
+
+  .recbar{display:flex;gap:10px;align-items:center}
+  .recbtn{flex:1;height:64px;border-radius:14px;border:0;color:white;font-size:18px;font-weight:600;letter-spacing:.3px;
+    background:linear-gradient(180deg,#4f8cff,#2563eb);box-shadow:0 6px 18px rgba(79,140,255,.35)}
+  .recbtn.recording{background:linear-gradient(180deg,#ef4444,#b91c1c);box-shadow:0 6px 18px rgba(239,68,68,.35);animation:pulse 1.4s infinite}
+  .recbtn:disabled{opacity:.5}
+  @keyframes pulse{50%{box-shadow:0 6px 28px rgba(239,68,68,.6)}}
+  .timer{min-width:64px;text-align:center;font-variant-numeric:tabular-nums;font-size:18px;color:var(--mute)}
+
+  .feed{flex:1;overflow-y:auto;padding:14px 14px 80px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .card.last{border-color:var(--accent)}
+  .card .meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mute);margin-bottom:6px}
+  .card .src{font-size:16px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+  .card .tr{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:15px;line-height:1.55;color:#cfe1ff;white-space:pre-wrap;word-break:break-word}
+  .card .tr.empty{color:var(--mute);font-style:italic;font-size:13px}
+  .hl{background:var(--hlbg);color:var(--hl);padding:0 3px;border-radius:3px;font-weight:600}
+  .terms{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:11px;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:3px 8px;border-radius:999px}
+  .chip b{color:var(--accent2);font-weight:600;margin-left:4px}
+
+  .empty{padding:30px 16px;text-align:center;color:var(--mute);font-size:13px}
+  .toolbar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px 12px;background:rgba(11,15,23,.92);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+  .toolbar button{flex:1;background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:10px;border-radius:10px;font-size:13px}
+  .toolbar button.danger{color:#fca5a5;border-color:#7f1d1d}
+
+  details.terms-search{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+  details.terms-search summary{cursor:pointer;color:var(--mute)}
+  details.terms-search input{width:100%;margin-top:8px;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:8px;border-radius:8px;font-size:13px}
+  .results{margin-top:8px;max-height:220px;overflow-y:auto}
+  .results .row2{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .results .row2 .k{color:var(--text)}
+  .results .row2 .v{color:var(--accent2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>IR 통역 보조 · 노무라 한↔중</h1>
+    <div class="sub">Whisper 전사 + Claude 번역 · 순차통역용</div>
+  </div>
+  <span id="status" class="status">준비</span>
+</header>
+
+<div class="controls">
+  <div class="row">
+    <span class="lab">발화 언어</span>
+    <div class="seg" id="lang">
+      <button data-v="auto" class="active">자동</button>
+      <button data-v="ko">🇰🇷 한국어</button>
+      <button data-v="zh">🇨🇳 中文</button>
+    </div>
+  </div>
+  <div class="recbar">
+    <button id="rec" class="recbtn">🎙 녹음 시작</button>
+    <div id="timer" class="timer">00:00</div>
+  </div>
+  <details class="terms-search">
+    <summary>📚 전문용어 검색 / 단위 변환</summary>
+    <input id="termSearch" placeholder="용어 검색 (예: 판다채권, AUM, ROE, 离岸)"/>
+    <div class="results" id="termResults"></div>
+    <div style="margin-top:10px;display:flex;gap:6px;align-items:center">
+      <input id="amt" type="number" placeholder="억원" style="flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:8px;border-radius:8px"/>
+      <button id="convBtn" style="background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:8px 12px;border-radius:8px">→ 中文</button>
+      <span id="convOut" style="color:var(--accent2);font-size:13px;min-width:90px"></span>
+    </div>
+  </details>
+</div>
+
+<div id="feed" class="feed">
+  <div class="empty" id="emptyHint">녹음을 시작하면 발화가 단락별로 전사·번역됩니다.<br/>전사 카드는 녹음을 멈춰도 사라지지 않습니다.</div>
+</div>
+
+<div class="toolbar">
+  <button id="exportBtn">📋 전체 복사</button>
+  <button id="clearBtn" class="danger">🗑 기록 지우기</button>
+</div>
+
+<script>
+/* ---------- IR 전문용어 사전 (한↔중) ---------- */
+const TERMS = [
+  // 기관/규모
+  ["AUM","管理资产规模"],["운용자산","管理资产规模"],["자기자본","自有资本"],["주주지분","股东权益"],
+  ["순자본비율","净资本比率"],["신용등급","信用评级"],
+  // 사업부문
+  ["IB","投资银行业务"],["투자은행","投资银行"],["WM","财富管理"],["자산관리","财富管理"],
+  ["ECM","股权资本市场"],["주식자본시장","股权资本市场"],["DCM","债务资本市场"],["채권자본시장","债务资本市场"],
+  ["PI","自营投资"],["자기자본투자","自营投资"],["CMA","现金管理账户"],
+  ["브로커리지","经纪业务"],["주관사","主承销商"],["공동주관사","联席主承销商"],
+  ["언더라이팅","承销"],["북빌딩","簿记建档"],["로드쇼","路演"],["크로스보더","跨境"],
+  // 상품
+  ["ELS","股票挂钩证券"],["DLS","衍生品挂钩证券"],["ROE","股本回报率"],["자기자본이익률","股本回报率"],
+  // IR 지표
+  ["IR","投资者关系"],["투자자관계","投资者关系"],["DJSI","道琼斯可持续发展指数"],
+  ["MSCI","MSCI指数"],["NPS","国民年金"],["CPP","养老基金投资池"],
+  // 자금조달
+  ["RP","回购协议"],["Repo","回购协议"],["환매조건부채권","回购协议"],
+  ["조달금리","融资成本"],["FCY","外币"],["외화","外币"],["CB","担保债券"],["커버드본드","担保债券"],
+  ["스프레드","利差"],["만기","到期"],["트랜치","分批"],
+  // 판다채권/위안화
+  ["판다채권","熊猫债券"],["역외 위안화","离岸人民币"],["CNH","离岸人民币"],
+  ["역내 위안화","在岸人民币"],["CNY","在岸人民币"],
+  // 재무제표
+  ["재무제표","财务报表"],["손익계산서","利润表"],["대차대조표","资产负债表"],
+  ["재무상태표","资产负债表"],["현금흐름표","现金流量表"],
+  ["영업수익","营业收入"],["순이익","净利润"],["배당성향","股息支付率"],["배당수익률","股息收益率"],
+  ["부채비율","负债比率"],
+  // 리스크/전략
+  ["익스포저","风险敞口"],["자본배분","资本配置"],["월권","越权"],["조정","调整"],["통과","通过"],
+];
+const TERM_MAP = Object.fromEntries(TERMS.map(([k,v])=>[k.toLowerCase(),v]));
+const TERM_KEYS = TERMS.map(([k])=>k).sort((a,b)=>b.length-a.length);
+
+function highlight(text){
+  if(!text) return "";
+  // escape HTML
+  let html = text.replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  // sort by length desc to avoid partial overlap
+  for(const k of TERM_KEYS){
+    const re = new RegExp("(^|[^\\w가-힣])("+escapeReg(k)+")(?=[^\\w가-힣]|$)", "gi");
+    html = html.replace(re, (m,pre,hit)=>`${pre}<span class="hl">${hit}</span>`);
+  }
+  return html;
+}
+function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+
+function detectTerms(text){
+  if(!text) return [];
+  const found = new Map();
+  const lower = text.toLowerCase();
+  for(const [k,v] of TERMS){
+    if(lower.includes(k.toLowerCase())) found.set(k,v);
+  }
+  return [...found];
+}
+
+/* ---------- 상태 ---------- */
+let lang = "auto";
+let mediaRecorder = null, stream = null, chunks = [], mimeType = "";
+let timerId = null, startTs = 0;
+let recording = false;
+const FEED_KEY = "ir_feed_v1";
+let feed = loadFeed();
+
+/* ---------- DOM ---------- */
+const $ = id=>document.getElementById(id);
+const statusEl = $("status");
+const recBtn = $("rec");
+const timerEl = $("timer");
+const feedEl = $("feed");
+const emptyHint = $("emptyHint");
+
+document.querySelectorAll("#lang button").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll("#lang button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    lang = b.dataset.v;
+  };
+});
+
+recBtn.onclick = ()=> recording ? stopRec() : startRec();
+$("clearBtn").onclick = ()=>{
+  if(!confirm("모든 기록을 지울까요?")) return;
+  feed = []; saveFeed(); render();
+};
+$("exportBtn").onclick = ()=>{
+  const text = feed.map(c=>`[${c.lang.toUpperCase()}] ${c.src}\n→ ${c.tr||"(미번역)"}`).join("\n\n");
+  navigator.clipboard.writeText(text).then(()=>setStatus("복사됨","ok",1500));
+};
+
+/* 단위 변환 */
+$("convBtn").onclick = ()=>{
+  const n = parseFloat($("amt").value);
+  if(!n||isNaN(n)){ $("convOut").textContent=""; return; }
+  // 입력: 억원 → 中文
+  let out;
+  if(n >= 10000) out = (n/10000).toFixed(2).replace(/\.?0+$/,"") + "万亿韩元";
+  else out = n + "亿韩元";
+  $("convOut").textContent = out;
+};
+
+/* 용어 검색 */
+$("termSearch").oninput = (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  const box = $("termResults");
+  if(!q){ box.innerHTML=""; return; }
+  const hits = TERMS.filter(([k,v])=>k.toLowerCase().includes(q)||v.toLowerCase().includes(q)).slice(0,30);
+  box.innerHTML = hits.map(([k,v])=>`<div class="row2"><span class="k">${k}</span><span class="v" data-c="${v}">${v}</span></div>`).join("") || `<div class="empty" style="padding:10px">결과 없음</div>`;
+  box.querySelectorAll(".v").forEach(el=>{
+    el.style.cursor="pointer";
+    el.onclick = ()=>navigator.clipboard.writeText(el.dataset.c).then(()=>setStatus("복사: "+el.dataset.c,"ok",1500));
+  });
+};
+
+/* ---------- 녹음 ---------- */
+function pickMime(){
+  const cands = ["audio/mp4","audio/aac","audio/webm;codecs=opus","audio/webm","audio/ogg"];
+  for(const m of cands) if(window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  return ""; // 브라우저 기본
+}
+
+async function startRec(){
+  try{
+    setStatus("마이크 요청…","busy");
+    stream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:true, noiseSuppression:true, autoGainControl:true
+    }});
+    mimeType = pickMime();
+    mediaRecorder = mimeType ? new MediaRecorder(stream,{mimeType}) : new MediaRecorder(stream);
+    chunks = [];
+    mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) chunks.push(e.data); };
+    mediaRecorder.onstop = onRecStop;
+    mediaRecorder.start();
+    recording = true;
+    startTs = Date.now();
+    recBtn.classList.add("recording");
+    recBtn.textContent = "⏹ 중지 후 전사·번역";
+    timerId = setInterval(()=>{
+      const s = Math.floor((Date.now()-startTs)/1000);
+      timerEl.textContent = `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+    }, 250);
+    setStatus("녹음 중","busy");
+  }catch(e){
+    setStatus("마이크 실패","err");
+    alert("마이크 접근 실패: "+e.message+"\n\n[설정 → Safari → 마이크: 허용] 확인 후 페이지 새로고침.");
+  }
+}
+function stopRec(){
+  if(!mediaRecorder) return;
+  recording = false;
+  clearInterval(timerId); timerId=null;
+  recBtn.classList.remove("recording");
+  recBtn.textContent = "🎙 녹음 시작";
+  setStatus("처리 중…","busy");
+  try{ mediaRecorder.stop(); }catch(e){}
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+}
+
+async function onRecStop(){
+  const blob = new Blob(chunks,{type:mimeType||"audio/mp4"});
+  if(blob.size < 800){ // 너무 짧으면 무시
+    setStatus("녹음 너무 짧음","err",2000);
+    return;
+  }
+  // 카드 먼저 추가 (전사·번역 대기 상태)
+  const card = { id:Date.now(), lang, src:"…전사 중", tr:"", terms:[] };
+  feed.push(card); saveFeed(); render();
+
+  try{
+    const b64 = await blobToB64(blob);
+    const tr = await fetch("/api/transcribe",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ audio:b64, mimeType: blob.type, language: lang })
+    });
+    if(!tr.ok) throw new Error(await tr.text());
+    const { text, language } = await tr.json();
+    card.src = text || "(전사 결과 없음)";
+    card.lang = language || (lang==="auto" ? guessLang(text) : lang);
+    card.terms = detectTerms(card.src);
+    saveFeed(); render();
+
+    if(!text){ setStatus("전사 결과 없음","err",2000); return; }
+
+    // 번역
+    setStatus("번역 중…","busy");
+    const target = card.lang === "ko" ? "zh" : "ko";
+    const trr = await fetch("/api/translate",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ text: card.src, source: card.lang, target })
+    });
+    if(!trr.ok) throw new Error(await trr.text());
+    const { translation } = await trr.json();
+    card.tr = translation || "";
+    saveFeed(); render();
+    setStatus("완료","ok",1500);
+  }catch(e){
+    card.tr = "(오류) "+ (e.message||e);
+    saveFeed(); render();
+    setStatus("오류","err",2500);
+  }
+}
+
+function guessLang(s){
+  if(!s) return "ko";
+  const han = (s.match(/[一-鿿]/g)||[]).length;
+  const kor = (s.match(/[가-힯]/g)||[]).length;
+  return han > kor ? "zh" : "ko";
+}
+
+function blobToB64(blob){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(String(r.result).split(",")[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+/* ---------- 렌더 ---------- */
+function loadFeed(){
+  try{ return JSON.parse(localStorage.getItem(FEED_KEY)||"[]"); }catch(e){ return []; }
+}
+function saveFeed(){
+  try{ localStorage.setItem(FEED_KEY, JSON.stringify(feed.slice(-200))); }catch(e){}
+}
+function render(){
+  emptyHint.style.display = feed.length ? "none" : "block";
+  // 효율 위해 단순 redraw
+  const html = feed.map((c,i)=>{
+    const isLast = i === feed.length-1;
+    const dir = c.lang === "zh" ? "中→韩" : "韩→中";
+    const chips = (c.terms||[]).map(([k,v])=>`<span class="chip">${k}<b>${v}</b></span>`).join("");
+    return `<div class="card ${isLast?"last":""}">
+      <div class="meta"><span>${dir} · ${new Date(c.id).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span><span>#${i+1}</span></div>
+      <div class="src">${highlight(c.src)}</div>
+      <div class="tr ${c.tr?"":"empty"}">${c.tr ? highlight(c.tr) : "번역 대기…"}</div>
+      ${chips ? `<div class="terms">${chips}</div>` : ""}
+    </div>`;
+  }).join("");
+  feedEl.innerHTML = html + `<div id="emptyHint" class="empty" style="display:${feed.length?"none":"block"}">녹음을 시작하면 발화가 단락별로 전사·번역됩니다.<br/>전사 카드는 녹음을 멈춰도 사라지지 않습니다.</div>`;
+  feedEl.scrollTop = feedEl.scrollHeight;
+}
+
+function setStatus(t,cls,ms){
+  statusEl.textContent = t;
+  statusEl.className = "status " + (cls||"");
+  if(ms){ setTimeout(()=>{ statusEl.textContent="대기"; statusEl.className="status"; }, ms); }
+}
+
+render();
+</script>
+</body>
+</html>
