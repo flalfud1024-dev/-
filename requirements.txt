@@ -1,6 +1,9 @@
 # 박사학위논문 데이터 수집 크롤러
 # 공통 의존성 (豆瓣 + Yes24 양쪽 사용)
 
+# === 웹 GUI (app.py) ===
+streamlit==1.28.0
+
 # === 핵심 ===
 requests==2.31.0
 beautifulsoup4==4.12.0

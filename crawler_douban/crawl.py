@@ -3,24 +3,14 @@
 豆瓣 도서 독자 단평(短评) 크롤러
 한강 『채식주의자』 박사학위논문 데이터 수집용
 
-사용 예:
-  # 도서 ID로 수집 (가장 일반적)
-  python crawl.py 35534519
-
-  # 페이지 수 지정
-  python crawl.py 35534519 --max-pages 20
-
-  # 정렬: 공감순(score) 또는 시간순(new)
-  python crawl.py 35534519 --sort score
-
-  # 날짜 필터 (수집 후 후처리)
-  python crawl.py 35534519 --date-from 2024-01-01 --date-to 2024-12-31
-
-  # 전체 URL로도 수집 가능
-  python crawl.py --url https://book.douban.com/subject/35534519/
+두 가지 사용법:
+  1) GUI:    streamlit run app.py  (권장 — 일반인 친화)
+  2) CLI:    python crawl.py 35534519 --max-pages 20
 
 논문 인용: 본 크롤러로 수집된 데이터는 본 저장소 commit hash로 재현 가능.
 """
+
+from __future__ import annotations
 
 import argparse
 import csv
@@ -33,19 +23,19 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from tqdm import tqdm
 
 # === 상수 ===
-SCRIPT_DIR = Path(__file__).parent
 DEFAULT_DELAY_MIN = 3.0
 DEFAULT_DELAY_MAX = 6.0
 DEFAULT_TIMEOUT = 10
 DEFAULT_MAX_RETRIES = 3
-RANDOM_SEED = 42  # 재현성
+RANDOM_SEED = 42
 
 HEADERS_BASE = {
     "User-Agent": (
@@ -60,81 +50,55 @@ HEADERS_BASE = {
     "Referer": "https://book.douban.com/",
 }
 
-
-# === CLI ===
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="豆瓣 단평 크롤러 (박사학위논문 데이터 수집용)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__.split("\n\n", 1)[1] if __doc__ else "",
-    )
-    target = parser.add_mutually_exclusive_group(required=True)
-    target.add_argument("book_id", nargs="?",
-                        help="豆瓣 도서 ID (예: 35534519)")
-    target.add_argument("--url",
-                        help="豆瓣 도서 페이지 전체 URL")
-
-    parser.add_argument("--max-pages", type=int, default=10,
-                        help="최대 수집 페이지 (페이지당 20건, 기본 10)")
-    parser.add_argument("--sort", choices=["score", "new", "time"],
-                        default="score",
-                        help="정렬: score=공감순(기본), new/time=시간순")
-    parser.add_argument("--status", choices=["P", "F", "W"], default="P",
-                        help="P=읽음(기본), F=읽는중, W=읽고싶음")
-    parser.add_argument("--date-from", default=None,
-                        help="시작일 필터 YYYY-MM-DD (선택)")
-    parser.add_argument("--date-to", default=None,
-                        help="종료일 필터 YYYY-MM-DD (선택)")
-    parser.add_argument("--out-dir", default="data",
-                        help="출력 디렉토리 (기본: ./data)")
-    parser.add_argument("--delay-min", type=float, default=DEFAULT_DELAY_MIN)
-    parser.add_argument("--delay-max", type=float, default=DEFAULT_DELAY_MAX)
-    return parser.parse_args()
+# 본 학위논문 사전 등록 도서
+KNOWN_BOOKS = {
+    "huchutong_2021": ("35534519", "후추통 2021 (간체)"),
+    "taiwan_2016":    ("26735623", "천일 2016 (번체, 타이완)"),
+    "tianyi_2013":    ("24847418", "천일 2013 (간체, 본토)"),
+}
 
 
 # === 익명화 ===
 def hash_user(user_id: str, salt: str) -> str:
-    """SHA-256(user_id + salt) — 사용자 식별자 익명화"""
     if not user_id:
         return ""
     return hashlib.sha256(f"{user_id}{salt}".encode("utf-8")).hexdigest()[:16]
 
 
-# === ID 추출 ===
-def extract_book_id(args: argparse.Namespace) -> str:
-    if args.book_id:
-        return args.book_id
-    m = re.search(r"/subject/(\d+)", args.url)
+# === ID 추출 (URL 또는 ID 모두 허용) ===
+def extract_book_id(url_or_id: str) -> str:
+    s = str(url_or_id).strip()
+    if s.isdigit():
+        return s
+    m = re.search(r"/subject/(\d+)", s)
     if not m:
-        sys.exit(f"❌ URL에서 도서 ID를 찾지 못했습니다: {args.url}")
+        raise ValueError(f"URL 또는 ID 형식이 아님: {url_or_id}")
     return m.group(1)
 
 
 # === 페이지 가져오기 ===
 def fetch_page(session: requests.Session, url: str,
-               logger: logging.Logger,
+               log: Callable[[str], None],
                max_retries: int = DEFAULT_MAX_RETRIES) -> str | None:
-    """403 발생 시 재시도 후 즉시 중단 신호 반환(None)"""
     for attempt in range(1, max_retries + 1):
         try:
             r = session.get(url, timeout=DEFAULT_TIMEOUT)
             if r.status_code == 200:
                 return r.text
-            logger.warning(f"  HTTP {r.status_code} (attempt {attempt}/{max_retries})")
+            log(f"  HTTP {r.status_code} (시도 {attempt}/{max_retries})")
             if r.status_code == 403:
                 if attempt == max_retries:
-                    logger.error("  403 누적 — IP 차단으로 판단, 수집 중단")
+                    log("  ⛔ 403 누적 — IP 차단으로 판단, 수집 중단")
                     return None
-                time.sleep(5 * attempt)  # 지수 백오프
+                time.sleep(5 * attempt)
         except requests.RequestException as e:
-            logger.warning(f"  요청 실패: {e} (attempt {attempt}/{max_retries})")
+            log(f"  요청 실패: {e} (시도 {attempt}/{max_retries})")
             time.sleep(3 * attempt)
     return None
 
 
 # === 단평 파싱 ===
 def parse_comments(html: str, salt: str) -> list[dict]:
-    """豆瓣 단평 페이지 HTML → 리뷰 dict 리스트"""
     soup = BeautifulSoup(html, "lxml")
     items = soup.select("li.comment-item")
     out = []
@@ -165,34 +129,28 @@ def parse_comments(html: str, salt: str) -> list[dict]:
                 continue
 
             votes_elem = item.select_one("span.vote-count")
-            votes_raw = votes_elem.get_text(strip=True) if votes_elem else "0"
             try:
-                votes = int(votes_raw)
+                votes = int(votes_elem.get_text(strip=True)) if votes_elem else 0
             except ValueError:
                 votes = 0
 
-            review_id = item.get("data-cid", "") or ""
-
             out.append({
-                "review_id": review_id,
+                "review_id": item.get("data-cid", "") or "",
                 "user_id_hash": hash_user(username_raw, salt),
                 "rating": rating,
                 "date": date,
                 "likes": votes,
                 "text": text,
             })
-        except Exception as e:
-            # 개별 항목 실패는 전체 수집을 막지 않음
+        except Exception:
             continue
     return out
 
 
-# === 날짜 필터 ===
 def in_date_range(date_str: str, date_from: str | None,
                   date_to: str | None) -> bool:
     if not date_str:
-        return True  # 날짜 없는 리뷰는 보존
-    # 豆瓣 날짜: "2024-03-15" 형식 가정
+        return True
     m = re.match(r"(\d{4}-\d{2}-\d{2})", date_str)
     if not m:
         return True
@@ -204,103 +162,213 @@ def in_date_range(date_str: str, date_from: str | None,
     return True
 
 
-# === 메인 ===
-def crawl(args: argparse.Namespace) -> None:
-    load_dotenv()
-    salt = os.environ.get("ANONYMIZATION_SALT", "")
+# ========================================================
+# 🌟 핵심 재사용 함수: GUI/CLI 공용
+# ========================================================
+def crawl_to_df(
+    book_id: str,
+    *,
+    max_pages: int = 10,
+    sort: str = "score",
+    status: str = "P",
+    date_from: str | None = None,
+    date_to: str | None = None,
+    delay_min: float = DEFAULT_DELAY_MIN,
+    delay_max: float = DEFAULT_DELAY_MAX,
+    salt: str | None = None,
+    out_dir: str | Path | None = None,
+    progress_callback: Callable[[int, int, str], None] | None = None,
+    log_callback: Callable[[str], None] | None = None,
+) -> tuple[pd.DataFrame, dict]:
+    """
+    豆瓣 단평 수집 본체 함수.
+
+    Args:
+        book_id: 豆瓣 도서 ID (숫자 문자열)
+        max_pages: 최대 페이지 (페이지당 20건)
+        sort: 'score' | 'new' | 'time'
+        status: 'P' | 'F' | 'W'
+        date_from / date_to: YYYY-MM-DD 형식 필터 (선택)
+        salt: 익명화 salt (None이면 환경변수에서 로드)
+        out_dir: 지정 시 CSV/로그/스냅샷 저장. None이면 메모리만.
+        progress_callback(current, total, msg): GUI 진행률 갱신용
+        log_callback(msg): GUI 로그 영역 갱신용
+
+    Returns:
+        (df, meta) — df는 수집 결과 DataFrame,
+                    meta는 {csv_path, log_path, snap_dir, n_collected, aborted}
+    """
+    if salt is None:
+        load_dotenv()
+        salt = os.environ.get("ANONYMIZATION_SALT", "")
     if not salt or salt.startswith("__REPLACE_ME__"):
-        sys.exit("❌ .env에 ANONYMIZATION_SALT를 설정하세요 "
-                 "(.env.example 참고)")
+        raise RuntimeError("ANONYMIZATION_SALT가 설정되지 않음 (.env 확인)")
 
-    random.seed(RANDOM_SEED)  # 재현성: 지연 패턴 고정
+    random.seed(RANDOM_SEED)
 
-    book_id = extract_book_id(args)
+    # 콜백 기본값
+    log = log_callback or (lambda m: print(m))
+    progress = progress_callback or (lambda c, t, m: None)
+
+    # 출력 디렉토리
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    snap_dir = out_dir / "_snapshots" / book_id
-    snap_dir.mkdir(parents=True, exist_ok=True)
+    save_files = out_dir is not None
+    csv_path = log_path = snap_dir = None
+    csv_writer = csv_file = None
+    file_logger = None
 
-    # 로깅
-    log_path = out_dir / f"douban_{book_id}_{timestamp}.log"
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-        handlers=[
-            logging.FileHandler(log_path, encoding="utf-8"),
-            logging.StreamHandler(sys.stdout),
-        ],
-    )
-    logger = logging.getLogger("douban")
-    logger.info(f"=== 豆瓣 수집 시작: 도서 {book_id} ===")
-    logger.info(f"인자: {vars(args)}")
+    if save_files:
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        snap_dir = out_dir / "_snapshots" / book_id
+        snap_dir.mkdir(parents=True, exist_ok=True)
+        log_path = out_dir / f"douban_{book_id}_{timestamp}.log"
+        csv_path = out_dir / f"douban_{book_id}_{timestamp}.csv"
 
-    # 세션
+        file_logger = logging.getLogger(f"douban_{book_id}_{timestamp}")
+        file_logger.setLevel(logging.INFO)
+        h = logging.FileHandler(log_path, encoding="utf-8")
+        h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        file_logger.addHandler(h)
+
+        csv_file = csv_path.open("w", encoding="utf-8-sig", newline="")
+        fieldnames = ["review_id", "book_id", "user_id_hash", "rating",
+                      "date", "likes", "text", "page", "crawl_timestamp"]
+        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        csv_writer.writeheader()
+
+    def _log(msg: str):
+        log(msg)
+        if file_logger:
+            file_logger.info(msg)
+
+    _log(f"=== 豆瓣 수집 시작: 도서 {book_id} ===")
+    _log(f"설정: max_pages={max_pages}, sort={sort}, status={status}, "
+         f"date={date_from}~{date_to}")
+
     session = requests.Session()
     headers = dict(HEADERS_BASE)
     contact = os.environ.get("RESEARCHER_EMAIL", "")
     if contact:
-        headers["From"] = contact  # 학술 목적 명시
+        headers["From"] = contact
     session.headers.update(headers)
 
-    csv_path = out_dir / f"douban_{book_id}_{timestamp}.csv"
-    fieldnames = ["review_id", "book_id", "user_id_hash", "rating",
-                  "date", "likes", "text", "page", "crawl_timestamp"]
+    rows_all: list[dict] = []
+    aborted = False
 
-    collected = 0
-    with csv_path.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
+    for page_idx in range(max_pages):
+        start = page_idx * 20
+        url = (f"https://book.douban.com/subject/{book_id}/comments/"
+               f"?start={start}&limit=20&status={status}&sort={sort}")
+        progress(page_idx, max_pages, f"페이지 {page_idx+1}/{max_pages} 수집 중…")
+        _log(f"[페이지 {page_idx+1}/{max_pages}] {url}")
 
-        for page_idx in tqdm(range(args.max_pages), desc="페이지"):
-            start = page_idx * 20
-            url = (
-                f"https://book.douban.com/subject/{book_id}/comments/"
-                f"?start={start}&limit=20&status={args.status}"
-                f"&sort={args.sort}"
-            )
-            logger.info(f"[페이지 {page_idx+1}/{args.max_pages}] {url}")
+        html = fetch_page(session, url, _log)
+        if html is None:
+            aborted = True
+            _log(f"수집 중단 — 페이지 {page_idx+1}에서 차단")
+            break
 
-            html = fetch_page(session, url, logger)
-            if html is None:
-                logger.error(f"수집 중단 — 페이지 {page_idx+1}에서 차단")
-                break
-
-            # 스냅샷 저장 (재파싱·검증용)
+        if save_files:
             (snap_dir / f"page_{page_idx+1:03d}.html").write_text(
                 html, encoding="utf-8"
             )
 
-            rows = parse_comments(html, salt)
-            if not rows:
-                logger.info("  단평 없음 → 종료")
-                break
+        rows = parse_comments(html, salt)
+        if not rows:
+            _log("  단평 없음 → 종료")
+            break
 
-            for row in rows:
-                if not in_date_range(row["date"], args.date_from,
-                                     args.date_to):
-                    continue
-                row["book_id"] = book_id
-                row["page"] = page_idx + 1
-                row["crawl_timestamp"] = datetime.now(timezone.utc).isoformat()
-                writer.writerow(row)
-                collected += 1
+        for row in rows:
+            if not in_date_range(row["date"], date_from, date_to):
+                continue
+            row["book_id"] = book_id
+            row["page"] = page_idx + 1
+            row["crawl_timestamp"] = datetime.now(timezone.utc).isoformat()
+            rows_all.append(row)
+            if csv_writer:
+                csv_writer.writerow(row)
 
-            logger.info(f"  ✓ {len(rows)}건 파싱, 누적 {collected}건")
-            f.flush()  # 차단 발생해도 데이터 손실 최소화
+        _log(f"  ✓ 파싱 {len(rows)}건, 누적 {len(rows_all)}건")
+        if csv_file:
+            csv_file.flush()
 
-            # 다음 페이지 전 무작위 지연
-            if page_idx < args.max_pages - 1:
-                delay = random.uniform(args.delay_min, args.delay_max)
-                logger.info(f"  ⏳ {delay:.1f}초 대기")
-                time.sleep(delay)
+        if page_idx < max_pages - 1:
+            delay = random.uniform(delay_min, delay_max)
+            _log(f"  ⏳ {delay:.1f}초 대기")
+            time.sleep(delay)
 
-    logger.info(f"=== 수집 종료 ===")
-    logger.info(f"총 수집: {collected}건")
-    logger.info(f"CSV: {csv_path}")
-    logger.info(f"로그: {log_path}")
-    logger.info(f"스냅샷: {snap_dir}")
+    progress(max_pages, max_pages, f"완료 — 총 {len(rows_all)}건")
+    _log(f"=== 수집 종료 — 총 {len(rows_all)}건 ===")
+
+    if csv_file:
+        csv_file.close()
+    if file_logger:
+        for h in file_logger.handlers[:]:
+            h.close()
+            file_logger.removeHandler(h)
+
+    df = pd.DataFrame(rows_all)
+    meta = {
+        "csv_path": str(csv_path) if csv_path else None,
+        "log_path": str(log_path) if log_path else None,
+        "snap_dir": str(snap_dir) if snap_dir else None,
+        "n_collected": len(rows_all),
+        "aborted": aborted,
+        "book_id": book_id,
+    }
+    return df, meta
+
+
+# ========================================================
+# CLI
+# ========================================================
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        description="豆瓣 단평 크롤러 (CLI). GUI는 streamlit run app.py 사용.",
+    )
+    target = p.add_mutually_exclusive_group(required=True)
+    target.add_argument("book_id", nargs="?", help="豆瓣 도서 ID")
+    target.add_argument("--url", help="豆瓣 도서 페이지 URL")
+
+    p.add_argument("--max-pages", type=int, default=10)
+    p.add_argument("--sort", choices=["score", "new", "time"], default="score")
+    p.add_argument("--status", choices=["P", "F", "W"], default="P")
+    p.add_argument("--date-from", default=None)
+    p.add_argument("--date-to", default=None)
+    p.add_argument("--out-dir", default="data")
+    p.add_argument("--delay-min", type=float, default=DEFAULT_DELAY_MIN)
+    p.add_argument("--delay-max", type=float, default=DEFAULT_DELAY_MAX)
+    return p.parse_args()
+
+
+def main():
+    args = parse_args()
+    book_id = extract_book_id(args.book_id or args.url)
+
+    # CLI: stdout 로깅
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
+
+    df, meta = crawl_to_df(
+        book_id,
+        max_pages=args.max_pages,
+        sort=args.sort,
+        status=args.status,
+        date_from=args.date_from,
+        date_to=args.date_to,
+        delay_min=args.delay_min,
+        delay_max=args.delay_max,
+        out_dir=args.out_dir,
+        log_callback=lambda m: None,  # logging.basicConfig가 처리
+    )
+    print(f"\n총 수집: {meta['n_collected']}건")
+    print(f"CSV: {meta['csv_path']}")
+    print(f"로그: {meta['log_path']}")
 
 
 if __name__ == "__main__":
-    crawl(parse_args())
+    main()
