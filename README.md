@@ -32,7 +32,8 @@
 │   ├── 03_methodology_notes.md    # 방법론 상세 노트
 │   ├── 04_ai_disclosure.md        # AI 활용 공시 및 각주 샘플
 │   ├── 05_sentiment_methodology.md # 감성분석 방법론 정당화
-│   └── 06_prd_crawler.md          # 豆瓣 크롤러 PRD v1.0 (자문자료 반영)
+│   ├── 06_prd_douban_crawler.md   # 豆瓣 (중국) 크롤러 PRD v1.1
+│   └── 07_prd_yes24_crawler.md    # Yes24 (한국) 크롤러 PRD v1.0
 ├── references/
 │   └── web_scraping_tutorial_summary.md # 데이터사이언스 자문 자료 요약
 └── code/
