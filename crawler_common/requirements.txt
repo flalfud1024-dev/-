@@ -1,0 +1,29 @@
+# 박사학위논문 데이터 수집 크롤러
+# 공통 의존성 (豆瓣 + Yes24 양쪽 사용)
+
+# === 핵심 ===
+requests==2.31.0
+beautifulsoup4==4.12.0
+lxml==4.9.0
+
+# === Yes24 동적 페이지 ===
+selenium==4.15.0
+webdriver-manager==4.0.0
+
+# === 설정/환경 ===
+pyyaml==6.0.1
+python-dotenv==1.0.0
+
+# === 안정성 ===
+tenacity==8.2.0           # 재시도 로직
+
+# === 데이터 처리 ===
+pandas==2.1.0
+python-Levenshtein==0.23.0  # fuzzy 중복 제거
+
+# === 진행률 표시 ===
+tqdm==4.66.0
+
+# === 테스트 ===
+pytest==7.4.0
+pytest-cov==4.1.0

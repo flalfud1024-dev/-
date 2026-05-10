@@ -1,0 +1,79 @@
+# =============================================================
+# 豆瓣 크롤러 설정
+# 본 파일은 코드 변경 없이 수집 대상·정책을 조정하기 위한 단일 진실 소스
+# =============================================================
+
+# === 수집 대상 도서 ===
+# PRD §2.1에서 확정된 3개 번역본
+books:
+  huchutong_2021:
+    book_id: "35534519"
+    title_zh: "素食者"
+    translator: "胡椒筒"
+    year: 2021
+    script: "simplified"          # 간체
+    publisher: "四川文艺出版社"
+    region: "mainland_china"
+
+  taiwan_2016:
+    book_id: "26735623"
+    title_zh: "素食者"
+    translator: "陳怡(천일)"
+    year: 2016
+    script: "traditional"         # 번체
+    publisher: "漫遊者文化"
+    region: "taiwan"
+
+  tianyi_2013:
+    book_id: "24847418"
+    title_zh: "素食主义者"
+    translator: "陳怡(천일)"
+    year: 2013
+    script: "simplified"
+    publisher: "重庆出版社"
+    region: "mainland_china"
+
+# === 수집 정책 ===
+collection:
+  # 단평 (short comments)
+  comments:
+    max_pages: 50                 # 페이지당 20건 → 최대 1,000건/번역본
+    target_min: 200               # PRD G1: 번역본별 최소 N
+    status: "P"                   # P=읽음, F=읽는중, W=읽고싶음
+    sort: "score"                 # score=정렬 default
+
+  # 장평 (long reviews)
+  reviews:
+    max_pages: 30
+    fetch_full_content: false     # true 시 각 장평 상세 페이지까지 수집
+
+# === 요청 정책 (PRD §FR-2, NFR-1) ===
+http:
+  base_url: "https://book.douban.com"
+  comments_url: "https://book.douban.com/subject/{book_id}/comments/"
+  reviews_url: "https://book.douban.com/subject/{book_id}/reviews"
+
+  delay_min_sec: 3.0              # 자료 2~4초 → 강화
+  delay_max_sec: 6.0
+  request_timeout_sec: 10
+  max_retries: 3
+  retry_backoff_base_sec: 5       # 지수 백오프 초기값
+
+  # 403 발생 시 즉시 중단 (자료에서 5p 후 차단 관측됨)
+  abort_on_403_after_retries: true
+
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+  accept_language: "zh-CN,zh;q=0.9,en;q=0.8,ko;q=0.7"
+  referer: "https://book.douban.com/"
+
+# === 출력 경로 ===
+output:
+  data_root: "data/raw"
+  log_dir: "data/raw/_logs"
+  snapshot_dir: "data/raw/_snapshots"
+  state_dir: "data/raw/_state"
+
+# === 재현성 ===
+reproducibility:
+  random_seed: 42

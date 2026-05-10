@@ -1,0 +1,59 @@
+# =============================================================
+# Yes24 크롤러 설정 (보조 baseline)
+# =============================================================
+
+# === 수집 대상 ===
+products:
+  vegetarian_kr:
+    product_id: "108422348"
+    title_kr: "채식주의자"
+    author: "한강"
+    publisher: "창비"
+    language: "ko-KR"
+
+# === 수집 정책 ===
+collection:
+  reviews:
+    max_pages: 50
+    target_min: 100               # 보조 baseline 용도, 메인보다 낮은 기준
+
+  one_line_comments:
+    enabled: true
+    max_pages: 30
+
+# === 노벨상 효과 분리 (PRD §FR-6) ===
+nobel_split:
+  enabled: true
+  pivot_date: "2024-10-10"        # 한강 노벨문학상 발표일
+  flag_field: "is_post_nobel"     # CSV에 boolean으로 기록
+
+# === Selenium 정책 ===
+selenium:
+  headless: true
+  no_sandbox: true
+  disable_dev_shm_usage: true
+  disable_gpu: true
+  window_size: "1920,1080"
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+  # 명시적 대기 시간
+  explicit_wait_sec: 10
+
+  # 페이지 간 지연
+  delay_min_sec: 2.0
+  delay_max_sec: 5.0
+
+# === URL 패턴 ===
+urls:
+  product_page: "https://www.yes24.com/Product/Goods/{product_id}"
+
+# === 출력 경로 ===
+output:
+  data_root: "data/raw"
+  log_dir: "data/raw/_logs"
+  snapshot_dir: "data/raw/_snapshots"
+  state_dir: "data/raw/_state"
+
+# === 재현성 ===
+reproducibility:
+  random_seed: 42
