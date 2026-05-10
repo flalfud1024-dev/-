@@ -31,7 +31,8 @@
 │   ├── 02_thesis_outline.md       # 논문 목차 (한외대 내규 반영)
 │   ├── 03_methodology_notes.md    # 방법론 상세 노트
 │   ├── 04_ai_disclosure.md        # AI 활용 공시 및 각주 샘플
-│   └── 05_sentiment_methodology.md # 감성분석 방법론 정당화
+│   ├── 05_sentiment_methodology.md # 감성분석 방법론 정당화
+│   └── 06_prd_crawler.md          # 豆瓣 크롤러 PRD (제품요구사항정의서)
 └── code/
     ├── requirements.txt           # 패키지 버전 고정
     ├── 00_setup.py                # 환경 설정
