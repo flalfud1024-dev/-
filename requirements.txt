@@ -23,6 +23,7 @@ tenacity==8.2.0           # 재시도 로직
 # === 데이터 처리 ===
 pandas==2.1.0
 python-Levenshtein==0.23.0  # fuzzy 중복 제거
+openpyxl==3.1.2             # Excel(.xlsx) 출력 (scraper.py)
 
 # === 진행률 표시 ===
 tqdm==4.66.0

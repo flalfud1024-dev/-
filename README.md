@@ -7,6 +7,112 @@
 
 ---
 
+## 🆕 PRD v1.0 도구: `scraper.py` (Windows 비프로그래머용)
+
+PRD 기준으로 예스24 회원리뷰 + 한줄평을 한 번에 수집해 **Excel과 CSV로 동시
+저장**하는 단일 스크립트입니다. 로그인·체크포인트·익명화 출력까지 포함합니다.
+
+> 처음 사용하시면 아래 단계만 그대로 따라가세요. 명령은 모두 **복사 → 붙여넣기**
+> 입니다.
+
+### 1) 준비 (한 번만 하면 됩니다)
+
+1. **Python 3.11 설치** — https://www.python.org/downloads/windows/
+   설치 화면에서 **반드시 `Add python.exe to PATH` 체크**.
+2. **크롬 브라우저 설치** — https://www.google.com/chrome/
+3. **이 저장소 다운로드** — GitHub 페이지 초록색 `Code` → `Download ZIP` →
+   압축 해제 (예: `C:\Users\YOUR\Documents\book-scraper`).
+4. **명령 프롬프트(cmd)** 를 열고 한 줄씩 입력 (폴더 경로는 본인 것으로):
+   ```cmd
+   cd C:\Users\YOUR\Documents\book-scraper
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+5. **환경 파일 만들기**
+   ```cmd
+   copy .env.example .env
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
+   - 마지막 명령이 출력한 긴 문자열을, 메모장으로 `.env`를 열어
+     `ANONYMIZATION_SALT=` 뒤에 붙여넣고 저장.
+   - 로그인 정보를 미리 넣어두려면 `YES24_ID`, `YES24_PW`도 채워둘 수 있습니다
+     (비워두면 첫 실행 때 브라우저에서 직접 로그인하면 됩니다).
+
+### 2) 첫 실행 — 시범 수집 (50페이지)
+
+```cmd
+venv\Scripts\activate
+python scraper.py --id 108422348 --max-pages 50 --no-headless --login --anonymized
+```
+
+- 브라우저 창이 뜨고 예스24 로그인 페이지가 열립니다.
+- 로그인을 완료한 뒤 **명령 창으로 돌아와 Enter** 를 누르면 수집이 시작됩니다.
+- 이후부터는 쿠키가 `.auth/`에 저장돼 매번 로그인하지 않아도 됩니다.
+
+### 3) 전체 리뷰 수집
+
+```cmd
+python scraper.py --id 108422348 --anonymized
+```
+
+- `--max-pages`를 빼면 끝까지 수집합니다.
+- `--anonymized`는 닉네임을 뺀 **연구 공개용 별도 파일**을 함께 만듭니다.
+- 중간에 끊겨도 같은 명령에 `--resume`만 추가하면 끊긴 지점부터 재개합니다.
+
+### 4) 결과 파일 위치
+
+```
+output\
+  9788936434595_채식주의자_20260511_1430.xlsx
+  9788936434595_채식주의자_20260511_1430.csv             ← Excel에서 한글 안 깨짐
+  9788936434595_채식주의자_20260511_1430_anonymized.xlsx ← 닉네임 제거본
+  9788936434595_채식주의자_20260511_1430_anonymized.csv
+
+logs\
+  run_20260511_1430_108422348.log    ← 실행 기록
+
+state\
+  108422348_member.json              ← 체크포인트 (재시작용)
+  108422348_oneliner.json
+```
+
+### 5) 다른 책 수집
+
+```cmd
+python scraper.py --url https://www.yes24.com/Product/Goods/XXXXXXXX --anonymized
+```
+
+### 자주 쓰는 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `--id 108422348` | 예스24 상품 ID |
+| `--url <URL>` | 상품 URL (둘 중 하나만) |
+| `--types member,oneliner` | 종류 선택 (기본: 둘 다) |
+| `--max-pages 50` | 종류별 최대 페이지 (0/생략 = 끝까지) |
+| `--anonymized` | 닉네임 제거본 추가 생성 |
+| `--no-headless` | 브라우저 창 보이기 (로그인·디버깅용) |
+| `--login` | 강제로 로그인 절차 진행 |
+| `--resume` | 체크포인트가 있으면 이어받기 |
+| `--delay-min 1.0 --delay-max 3.0` | 요청 간 지연(초) |
+
+### 문제가 생기면
+
+- **`python is not recognized`** → Python 재설치, "Add to PATH" 체크.
+- **로그인 자동 입력이 안 됨** → `--no-headless`로 창을 띄워 직접 로그인 후 Enter.
+- **수집 0건** → `--no-headless`로 화면을 보며 어디서 멈추는지 확인.
+  사이트 마크업이 바뀐 경우 `scraper.py` 상단 `SELECTORS` 영역만 수정.
+- **중간 중단** → 같은 명령에 `--resume` 추가.
+
+### 기존 GUI 도구와의 관계
+
+기존 `app.py`(Streamlit GUI) 와 `crawler_yes24/crawl.py`는 그대로 두었습니다.
+간단히 클릭으로 사용하려면 GUI를, PRD 사양대로 한 번에 정식 수집하려면
+`scraper.py`를 쓰시면 됩니다.
+
+---
+
 ## 🌟 빠른 시작 (3단계)
 
 ```bash
