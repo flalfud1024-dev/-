@@ -1,0 +1,251 @@
+<title>논문 변증법 회로 시각화</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif; max-width: 1100px; margin: 30px auto; padding: 20px; background: #fafafa; color: #222; line-height: 1.6; }
+  h1 { color: #2a2a5a; border-bottom: 3px solid #c9184a; padding-bottom: 10px; }
+  h2 { color: #2a6f6b; margin-top: 40px; border-left: 5px solid #2a6f6b; padding-left: 12px; }
+  .box { padding: 14px 18px; border-radius: 10px; margin: 8px 0; text-align: center; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  .origin { background: #ffd6e0; border: 2px solid #c9184a; color: #6a0f2a; }
+  .macro { background: #e8ddf5; border: 2px solid #7c3aed; color: #4c1d95; }
+  .micro { background: #f5e3dd; border: 2px solid #c05621; color: #7c2d12; }
+  .translation { background: #fff5d1; border: 2px solid #d4a017; color: #713f12; }
+  .review { background: #d1e7dd; border: 2px solid #146c43; color: #0a3622; }
+  .kr { background: #d0e8f2; border: 2px dashed #3d5a80; color: #1e3a5f; }
+  .return { background: #ffedb3; border: 3px solid #e09f3e; color: #7c4a03; font-size: 1.15em; }
+  .light { background: #fce7f3; border: 2px solid #db2777; color: #831843; }
+  .contrib { background: #c9e4de; border: 3px solid #2a6f6b; color: #134e4a; font-size: 1.2em; padding: 20px; }
+  .arrow { text-align: center; color: #666; font-size: 24px; margin: 4px 0; font-weight: bold; }
+  .arrow-side { color: #3d5a80; font-style: italic; font-size: 13px; }
+  .row { display: flex; gap: 12px; justify-content: center; margin: 10px 0; }
+  .row > * { flex: 1; }
+  .container { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin: 20px 0; }
+  .horizontal { display: flex; align-items: center; gap: 20px; margin: 30px 0; }
+  .horizontal .center { flex: 1; }
+  .horizontal .side { flex: 0 0 220px; }
+  .caption { text-align: center; font-size: 14px; color: #666; margin-top: 8px; font-style: italic; }
+  table { border-collapse: collapse; width: 100%; margin: 20px 0; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+  th { background: #2a6f6b; color: white; }
+  .note { background: #fef3c7; padding: 14px 18px; border-left: 5px solid #f59e0b; border-radius: 4px; margin: 20px 0; }
+  .toc { background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 30px; }
+  .toc a { color: #0369a1; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+
+<h1>논문 변증법 회로 시각화</h1>
+<div class="caption">한강 『채식주의자』 중문 번역본의 독자수용 다학제 연구</div>
+
+<div class="toc">
+  <b>도표 목록</b>
+  <ul>
+    <li><a href="#circuit">① 변증법적 회귀 회로 (메인 관계도)</a></li>
+    <li><a href="#macmic">② 거시 / 미시 매핑</a></li>
+    <li><a href="#method">③ 방법론 이미지 (3층 삼각 분석)</a></li>
+    <li><a href="#light4">④ 4중 조명 = 논문 기여</a></li>
+    <li><a href="#summary">⑤ 한 페이지 총괄</a></li>
+  </ul>
+</div>
+
+<!-- ============ 도표 1: 메인 관계도 ============ -->
+<h2 id="circuit">① 변증법적 회귀 회로 (메인 관계도)</h2>
+<div class="container">
+
+  <div class="box origin">📖 원작 『채식주의자』 (한강, 2007) — 열린 텍스트</div>
+  <div class="arrow">▼ 번역 개입 ▼</div>
+
+  <div class="row">
+    <div class="box macro">🔷 거시적 개입<br/><small>제목·표지·텍스트언어학</small></div>
+    <div class="box micro">🔶 미시적 개입<br/><small>예술적 번역·특정 구절</small></div>
+  </div>
+  <div class="arrow">▼</div>
+
+  <div class="row">
+    <div class="box translation">天怡 2013<br/><small>본토·검열</small></div>
+    <div class="box translation">天怡 2016<br/><small>대만·복원</small></div>
+    <div class="box translation">胡椒筒 2021<br/><small>본토·대안</small></div>
+  </div>
+  <div class="arrow">▼ 더우반 독자 수용 ▼</div>
+
+  <div class="horizontal">
+    <div class="side">
+      <div class="box kr">🇰🇷 한국 독자후기<br/><small>Yes24 텍스트마이닝<br/>(참조 좌표축)</small></div>
+    </div>
+    <div class="center">
+      <div class="row">
+        <div class="box review">독자후기 A</div>
+        <div class="box review">독자후기 B</div>
+        <div class="box review">독자후기 C</div>
+      </div>
+      <div class="caption">— 대조 —</div>
+    </div>
+  </div>
+
+  <div class="arrow">▼ 변증법적 회귀 ▼</div>
+  <div class="box return">⟳ 변증법적 회귀 (재조명이 원작으로 돌아감)</div>
+  <div class="arrow">▼</div>
+
+  <div class="row">
+    <div class="box light">① 원작의 열린<br/>성격 증명</div>
+    <div class="box light">② 원작-번역<br/>관계 재정립</div>
+    <div class="box light">③ 원작 해석<br/>심화</div>
+    <div class="box light">④ 번역가의 과제<br/>재이론화</div>
+  </div>
+  <div class="arrow">▼ 통합 ▼</div>
+
+  <div class="box contrib">💎 논문의 본질적 기여<br/>= 4중 조명의 통합적 종합</div>
+
+</div>
+
+<!-- ============ 도표 2: 거시 / 미시 매핑 ============ -->
+<h2 id="macmic">② 거시 / 미시 매핑</h2>
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>거시적 개입 (Macro)</th>
+        <th>미시적 개입 (Micro)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>정의</th>
+        <td>구조적·프레임적 개입</td>
+        <td>개별 요소적 개입</td>
+      </tr>
+      <tr>
+        <th>분석 대상</th>
+        <td>
+          • 제목 번역 (素食主义者 vs 素食者)<br/>
+          • 표지 디자인 (기호학적 신화)<br/>
+          • 표제어 (파라텍스트)<br/>
+          • 텍스트언어학적 전체 구조<br/>
+          • 검열의 규범적 개입
+        </td>
+        <td>
+          • 예술적 번역 (원문 해석 불확정성)<br/>
+          • 특정 구절 번역 선택<br/>
+          • 인물 호칭·상징 표현<br/>
+          • 미시적 어휘 선택
+        </td>
+      </tr>
+      <tr>
+        <th>해당 챕터</th>
+        <td>Ch 4 (검열) · Ch 5 (파라텍스트) · Ch 6.4 (제목 케이스)</td>
+        <td>Ch 6.5 (원문 해석 불확정성) · Ch 6.3 (부분적)</td>
+      </tr>
+      <tr>
+        <th>논문 비중</th>
+        <td>논문 대부분</td>
+        <td>특수 심층 분석</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note">
+    <b>발견</b>: 논문 대부분이 거시 분석이며, Ch 6.5가 유일한 심층 미시 분석.
+    이 비율 재검토 여지 있음.
+  </div>
+</div>
+
+<!-- ============ 도표 3: 방법론 이미지 ============ -->
+<h2 id="method">③ 방법론 이미지 — 3층 삼각 분석의 관계별 적용</h2>
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>관계</th>
+        <th>적용 방법</th>
+        <th>3층 대응</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>원작 ↔ 번역</td>
+        <td>텍스트 대조 (거시·미시)</td>
+        <td>Layer 1에 준함</td>
+      </tr>
+      <tr style="background: #fff5d1;">
+        <td><b>번역 ↔ 독자후기 ⭐</b></td>
+        <td><b>텍스트마이닝 + 질적 코딩</b></td>
+        <td><b>Layer 1 + Layer 2</b> (핵심)</td>
+      </tr>
+      <tr>
+        <td>원작 ↔ 독자후기</td>
+        <td>한국 baseline 텍스트마이닝</td>
+        <td>Layer 1 (참조)</td>
+      </tr>
+      <tr style="background: #c9e4de;">
+        <td><b>변증법적 회귀 (Ch 7)</b></td>
+        <td><b>철학적 해석</b></td>
+        <td><b>Layer 3</b></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 도표 4: 4중 조명 ============ -->
+<h2 id="light4">④ 4중 조명 = 논문 기여</h2>
+<div class="container">
+  <div class="box return">변증법적 회귀에서 발생하는 4개의 조명</div>
+  <div class="arrow">▼</div>
+  <div class="row">
+    <div class="box light">
+      <b>① 원작의 열린 성격 증명</b><br/>
+      <small>(텍스트 존재론 층위)<br/>
+      Iser 빈자리·Lotman 예술적 번역 이론화</small>
+    </div>
+    <div class="box light">
+      <b>② 원작-번역 관계 재정립</b><br/>
+      <small>(번역의 이데올로기적 개입)<br/>
+      Toury 규범·Barthes 계보</small>
+    </div>
+  </div>
+  <div class="row">
+    <div class="box light">
+      <b>③ 원작 해석 심화</b><br/>
+      <small>(독자후기가 원작을 조명)<br/>
+      다국적 수용의 조망</small>
+    </div>
+    <div class="box light">
+      <b>④ 번역가의 과제 재이론화</b><br/>
+      <small>(Benjamin 1923 → 2027 재답변)<br/>
+      디지털 시대의 번역가</small>
+    </div>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="box contrib">
+    "번역 개입은 원작의 열린 성격을 특정 방식으로 굴절시켜 독자수용에 새 지형을 열며,
+    그 회귀에서 원작 자체가 재조명되고, 이는 이 시대 번역가의 과제를 재정의한다."
+  </div>
+</div>
+
+<!-- ============ 도표 5: 총괄 ============ -->
+<h2 id="summary">⑤ 한 페이지 총괄 (요약 회로)</h2>
+<div class="container">
+  <div class="box origin">원작 (한강)</div>
+  <div class="arrow">▼ 거시(제목·표지·구조) + 미시(예술적 번역·특정 구절)</div>
+  <div class="row">
+    <div class="box translation">번역 3본</div>
+    <div class="arrow" style="flex: 0 0 100px;">텍마+질적</div>
+    <div class="box review">독자후기 3세트</div>
+  </div>
+  <div class="arrow" style="text-align: left;"><span class="arrow-side">◀── 한국 독자후기 (Yes24 텍마 참조) ──▶</span></div>
+  <div class="arrow">▼ 변증법적 회귀 ▼</div>
+  <div class="box return">4중 조명: ①열린성격 ②번역관계재정립 ③원작해석심화 ④번역가과제재이론화</div>
+  <div class="arrow">▼</div>
+  <div class="box contrib">💎 논문의 본질적 기여</div>
+</div>
+
+<div class="note" style="margin-top: 40px;">
+  <b>이 도표들의 활용 위치</b>
+  <ul>
+    <li>도표 ① — 서론(Ch 1.4) "본 연구의 개념 지도"</li>
+    <li>도표 ② — 방법론(Ch 3.1) "번역 개입의 두 차원"</li>
+    <li>도표 ③ — 방법론(Ch 3.1.2) "3층 삼각 분석"</li>
+    <li>도표 ④ — 결론(Ch 8.2) "이론적 기여"</li>
+    <li>도표 ⑤ — 초록 · 심사 발표 슬라이드</li>
+  </ul>
+</div>
+
+<div class="caption" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+  본 시각화는 사용자 Q1~Q4 답변(2026-09-03)을 반영한 것이며, 지도교수 협의 후 최종 확정.
+</div>
