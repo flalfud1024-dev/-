@@ -191,6 +191,7 @@
 | D3 | Nobel 전후 처리 | **분리** (배제 X, 메인=이전 / 보완=이후) | 2026-09-03 | docs/03 §7, crawler_douban/crawl.py, crawler_yes24/crawl.py, app.py |
 | D4 | Ch 7 철학적 종합 신설 | **SRQ4 신설** (Barthes-Benjamin 변증법적 종합) | 2026-09-03 | docs/09 v1.1, docs/02, docs/10 |
 | D5 | 제목 번역 케이스 = 논문 관통 실 | **응집성 주 축, 4기준 통합 showcase** (Ch 3·4·5·6·7 관통) | 2026-09-03 | docs/11 (신규) |
+| D6 | 독자수용 vs 독자반응 이론 | **독자수용(Iser) 채택**, Rosenblatt는 보조 어휘 | 2026-09-03 | docs/12 (신규) |
 
 ### D1: 한국 baseline = 해석적 참조
 
