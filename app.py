@@ -196,20 +196,29 @@ with tab_douban:
                 st.success(f"✅ 수집 완료 — **{meta['n_collected']}건**")
 
             if len(df) > 0:
+                # Nobel 전후 요약 (결정 D3)
+                if "is_post_nobel" in df.columns:
+                    pre_n = int((~df["is_post_nobel"]).sum())
+                    post_n = int(df["is_post_nobel"].sum())
+                    c_pre, c_post = st.columns(2)
+                    c_pre.metric("🕊️ Nobel 이전 (메인 분석)", f"{pre_n}건")
+                    c_post.metric("🎉 Nobel 이후 (보완 분석)", f"{post_n}건")
+
                 # 표시용 컬럼 순서
                 cols = ["page", "date", "user_id_hash", "rating",
-                        "likes", "text"]
+                        "likes", "is_post_nobel", "text"]
                 cols = [c for c in cols if c in df.columns]
                 st.dataframe(
                     df[cols],
                     use_container_width=True,
                     column_config={
-                        "page":        st.column_config.NumberColumn("페이지", width="small"),
-                        "date":        st.column_config.TextColumn("작성일", width="small"),
-                        "user_id_hash": st.column_config.TextColumn("작성자ID(해시)", width="small"),
-                        "rating":      st.column_config.NumberColumn("별점", width="small"),
-                        "likes":       st.column_config.NumberColumn("공감", width="small"),
-                        "text":        st.column_config.TextColumn("내용", width="large"),
+                        "page":          st.column_config.NumberColumn("페이지", width="small"),
+                        "date":          st.column_config.TextColumn("작성일", width="small"),
+                        "user_id_hash":  st.column_config.TextColumn("작성자ID(해시)", width="small"),
+                        "rating":        st.column_config.NumberColumn("별점", width="small"),
+                        "likes":         st.column_config.NumberColumn("공감", width="small"),
+                        "is_post_nobel": st.column_config.CheckboxColumn("노벨 이후", width="small"),
+                        "text":          st.column_config.TextColumn("내용", width="large"),
                     },
                 )
 

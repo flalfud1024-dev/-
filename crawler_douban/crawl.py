@@ -36,6 +36,7 @@ DEFAULT_DELAY_MAX = 6.0
 DEFAULT_TIMEOUT = 10
 DEFAULT_MAX_RETRIES = 3
 RANDOM_SEED = 42
+NOBEL_PIVOT_DATE = "2024-10-10"  # 한강 노벨문학상 발표일 (결정 D3: 분리 분석)
 
 HEADERS_BASE = {
     "User-Agent": (
@@ -63,6 +64,15 @@ def hash_user(user_id: str, salt: str) -> str:
     if not user_id:
         return ""
     return hashlib.sha256(f"{user_id}{salt}".encode("utf-8")).hexdigest()[:16]
+
+
+# === Nobel 전후 판별 (결정 D3) ===
+def is_post_nobel(date_str: str) -> bool:
+    """2024-10-10(한강 노벨상 발표일) 이후 작성 여부"""
+    if not date_str:
+        return False
+    m = re.match(r"(\d{4}-\d{2}-\d{2})", str(date_str))
+    return bool(m) and m.group(1) >= NOBEL_PIVOT_DATE
 
 
 # === ID 추출 (URL 또는 ID 모두 허용) ===
@@ -140,6 +150,7 @@ def parse_comments(html: str, salt: str) -> list[dict]:
                 "rating": rating,
                 "date": date,
                 "likes": votes,
+                "is_post_nobel": is_post_nobel(date),
                 "text": text,
             })
         except Exception:
@@ -233,7 +244,8 @@ def crawl_to_df(
 
         csv_file = csv_path.open("w", encoding="utf-8-sig", newline="")
         fieldnames = ["review_id", "book_id", "user_id_hash", "rating",
-                      "date", "likes", "text", "page", "crawl_timestamp"]
+                      "date", "likes", "is_post_nobel", "text",
+                      "page", "crawl_timestamp"]
         csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         csv_writer.writeheader()
 
