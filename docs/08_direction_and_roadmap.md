@@ -189,6 +189,7 @@
 | D1 | 한국 baseline 위치 | **해석적 참조** (통계 비교 X, 해석 좌표축 O) | 2026-09-03 | docs/03 §5, docs/01, docs/07 |
 | D2 | 텍스톰의 지위 | **검증 도구** (주 도구는 Python 파이프라인) | 2026-09-03 | docs/03 §6 |
 | D3 | Nobel 전후 처리 | **분리** (배제 X, 메인=이전 / 보완=이후) | 2026-09-03 | docs/03 §7, crawler_douban/crawl.py, crawler_yes24/crawl.py, app.py |
+| D4 | Ch 7 철학적 종합 신설 | **SRQ4 신설** (Barthes-Benjamin 변증법적 종합) | 2026-09-03 | docs/09 v1.1, docs/02, docs/10 |
 
 ### D1: 한국 baseline = 해석적 참조
 
