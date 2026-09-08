@@ -198,6 +198,8 @@
 | D10 | Ch 7 두 철학적 계보로 확장 | **'저자의 죽음' vs '번역가의 과제' 계보 대립** / Derrida 다리 | 2026-09-03 | docs/16 (신규) |
 | D11 | 예술적 번역·원문 해석 불확정성 배치 | **Ch 6.5 실증 + Ch 7.2.5 이론화 2단계** (Bakhtin·Lotman·Iser 통합) | 2026-09-03 | docs/18 (신규) |
 | D12 | 3-layer 명명 및 방어 논리 | **"3층 삼각 분석법(Three-tier Triangulation)"** + Bhaskar/Van Manen/Denzin 근거 | 2026-09-03 | docs/21 (신규) |
+| D13 | 비인간적 전환에의 응답 | **문화적 전환 계승 + 비인간적 전환에의 반영적 응답 (하이브리드 담론)** | 2026-09-03 | docs/23 (신규) |
+| D14 | TRFF 프레임 신설 | **Translation-Reception Factor Framework** (3차원 매트릭스, 후속 연구 발판) | 2026-09-03 | docs/24 (신규) |
 
 ### D1: 한국 baseline = 해석적 참조
 
