@@ -200,6 +200,8 @@
 | D12 | 3-layer 명명 및 방어 논리 | **"3층 삼각 분석법(Three-tier Triangulation)"** + Bhaskar/Van Manen/Denzin 근거 | 2026-09-03 | docs/21 (신규) |
 | D13 | 비인간적 전환에의 응답 | **문화적 전환 계승 + 비인간적 전환에의 반영적 응답 (하이브리드 담론)** | 2026-09-03 | docs/23 (신규) |
 | D14 | TRFF 프레임 신설 | **Translation-Reception Factor Framework** (3차원 매트릭스, 후속 연구 발판) | 2026-09-03 | docs/24 (신규) |
+| D15 | Lotman 5단계 문화 상호작용 모델 | **논문의 시간적 서사 축**으로 채택 (Ch 2.3.3 + Ch 6.9 + Ch 8) | 2026-09-12 | refs/semiotics/lotman_cultural_interaction.md |
+| D16 | Chesterman 4접근법 명시 | **본 논문 = 텍스트적 + 문화적 접근 조합** (Chesterman 자신 권장) | 2026-09-12 | refs/semiotics/chesterman_2005_approaches.md |
 
 ### D1: 한국 baseline = 해석적 참조
 
